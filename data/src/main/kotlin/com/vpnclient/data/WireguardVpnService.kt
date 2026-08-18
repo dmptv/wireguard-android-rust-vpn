@@ -1,15 +1,16 @@
-package com.vpnclient.app
+package com.vpnclient.data
 
 import android.content.Intent
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
+import com.vpnclient.domain.TunnelStatusReporter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import uniffi.vpn_core.TunnAction
 import uniffi.vpn_core.WireguardTunnel
 import java.io.FileInputStream
@@ -18,7 +19,16 @@ import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetSocketAddress
 
+/**
+ * Настоящий VpnService. В отличие от исходной версии (всё было в одном
+ * MainActivity), теперь сообщает реальный статус наружу через
+ * TunnelStatusReporter — репозиторий (:data/DefaultTunnelRepository) реализует
+ * этот интерфейс, а Koin внедряет его сюда, минуя прямую зависимость
+ * сервиса от конкретного класса репозитория.
+ */
 class WireguardVpnService : VpnService() {
+
+    private val statusReporter: TunnelStatusReporter by inject()
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var tunFd: ParcelFileDescriptor? = null
@@ -30,26 +40,32 @@ class WireguardVpnService : VpnService() {
         val serverHost = intent.getStringExtra(EXTRA_SERVER_HOST) ?: return START_NOT_STICKY
         val serverPort = intent.getIntExtra(EXTRA_SERVER_PORT, 0)
 
+        statusReporter.reportConnecting()
         startTunnel(privateKey, peerPublicKey, serverHost, serverPort)
         return START_STICKY
     }
 
     private fun startTunnel(privateKey: String, peerPublicKey: String, host: String, port: Int) {
-        // Поднимаем виртуальный сетевой интерфейс. Приложения на телефоне будут
-        // писать сюда свои исходящие пакеты, а мы читаем их, шифруем и отправляем сами.
-        val pfd = Builder()
-            .addAddress("10.0.0.2", 32)
-            .addRoute("0.0.0.0", 0)
-            .setMtu(1280)
-            .setSession("VpnClient")
-            .establish() ?: return
+        val pfd = try {
+            Builder()
+                .addAddress("10.0.0.2", 32)
+                .addRoute("0.0.0.0", 0)
+                .setMtu(1280)
+                .setSession("VpnClient")
+                .establish()
+        } catch (e: Exception) {
+            statusReporter.reportFailed(e.message ?: "failed to establish TUN interface")
+            return
+        }
+        if (pfd == null) {
+            statusReporter.reportFailed("VpnService.Builder.establish() returned null")
+            return
+        }
         tunFd = pfd
 
-        // Обычный UDP-сокет, через который мы сами говорим с WireGuard-сервером.
         val udp = DatagramSocket()
         // Критично: без protect() система маршрутизирует ЭТОТ сокет обратно через
-        // наш же TUN-интерфейс — получается бесконечная петля, ничего не заработает.
-        // protect() говорит системе "этот сокет — часть самого VPN, не трогай его".
+        // наш же TUN-интерфейс — получается бесконечная петля.
         protect(udp)
         udp.connect(InetSocketAddress(host, port))
         socket = udp
@@ -78,14 +94,17 @@ class WireguardVpnService : VpnService() {
                 udp.receive(datagramPacket)
                 val data = buffer.copyOf(datagramPacket.length)
                 when (val action = tunnel.decapsulate(data)) {
-                    is TunnAction.WriteToTunnel -> tunOut.write(action.data)
+                    is TunnAction.WriteToTunnel -> {
+                        tunOut.write(action.data)
+                        statusReporter.reportConnected() // первые расшифрованные данные = сессия реально работает
+                    }
                     is TunnAction.SendToNetwork -> udp.send(DatagramPacket(action.data, action.data.size))
                     TunnAction.Nothing -> Unit
                 }
             }
         }
 
-        // Поток 3: раз в секунду — keepalive и повторные попытки handshake, если сервер молчит.
+        // Поток 3: раз в секунду — keepalive и повторные попытки handshake.
         scope.launch {
             while (true) {
                 delay(1000)
@@ -93,8 +112,6 @@ class WireguardVpnService : VpnService() {
             }
         }
 
-        // Запускаем handshake сразу же — иначе первый пакет из приложений телефона
-        // будет ждать, пока не произойдёт хоть какое-то событие.
         handleAction(tunnel.encapsulate(ByteArray(0)), udp)
     }
 
@@ -108,6 +125,7 @@ class WireguardVpnService : VpnService() {
         scope.cancel()
         socket?.close()
         tunFd?.close()
+        statusReporter.reportDisconnected()
         super.onDestroy()
     }
 

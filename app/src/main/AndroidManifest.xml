@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Сервис WireguardVpnService объявлен в манифесте :data — Android сам
+         сольёт его сюда при сборке финального APK (manifest merger). -->
 
     <application
+        android:name=".VpnClientApp"
         android:label="VpnClient"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
@@ -14,17 +16,15 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
 
-        <!-- permission="BIND_VPN_SERVICE" обязателен — без него система откажется
-             признавать этот сервис настоящим VPN-провайдером. -->
-        <service
-            android:name=".WireguardVpnService"
-            android:permission="android.permission.BIND_VPN_SERVICE"
-            android:exported="false">
+            <!-- Deep links: vpnclient://selftest, vpnclient://connect —
+                 обрабатываются Navigation Compose внутри NavHost (см. MainActivity). -->
             <intent-filter>
-                <action android:name="android.net.VpnService" />
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="vpnclient" />
             </intent-filter>
-        </service>
+        </activity>
     </application>
 </manifest>

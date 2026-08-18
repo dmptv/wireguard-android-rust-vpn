@@ -15,3 +15,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "VpnClient"
 include(":app")
+include(":domain")
+include(":data")
+include(":feature-selftest")
+include(":feature-connect")

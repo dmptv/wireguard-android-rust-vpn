@@ -39,22 +39,43 @@ cargo run --bin test_server -- 51999
 ```
 
 Он слушает указанный порт с захардкоженной парой ключей (см.
-`src/bin/test_server.rs` и `VpnConfig` в `MainActivity.kt` — они должны совпадать).
-С Android-эмулятора сервер на хост-машине доступен по адресу `10.0.2.2`.
+`src/bin/test_server.rs` и `VpnConfig` в `data/.../DefaultTunnelRepository.kt` —
+они должны совпадать). С Android-эмулятора сервер на хост-машине доступен по
+адресу `10.0.2.2`.
 
-## Структура проекта
+## Архитектура: многомодульность
+
+Проект разбит на независимые Gradle-модули с чёткими границами зависимостей —
+так же, как это делают в командах, где несколько разработчиков работают над
+разными фичами параллельно, не мешая друг другу:
 
 ```
 VpnClient/
-├── app/                        Android-приложение (Kotlin, Jetpack Compose)
-│   └── .../WireguardVpnService.kt   настоящий VpnService: TUN + UDP + Rust-ядро
-├── rust/vpn-core/               Rust-крейт с криптографией
-│   ├── src/lib.rs                публичный API: generate_keypair, WireguardTunnel
-│   └── src/bin/
-│       ├── test_server.rs        тестовый WireGuard-сервер
-│       └── test_client.rs        тестовый клиент (для локальной проверки без Android)
-└── jniLibs/                     скомпилированные .so под Android (arm64-v8a, x86_64)
+├── domain/            чистый Kotlin, БЕЗ Android SDK. Модели, интерфейсы
+│                       (TunnelRepository, TunnelStatusReporter), ничего лишнего.
+├── data/               реализация domain-интерфейсов: WireguardVpnService,
+│                       DefaultTunnelRepository, UniFFI-биндинги, .so из rust/.
+├── feature-selftest/   экран self-test (Compose + ViewModel). Знает только :domain.
+├── feature-connect/    экран подключения к серверу. Тоже знает только :domain.
+├── app/                тонкий модуль: Koin DI, NavHost с deep links, манифест.
+├── rust/vpn-core/       Rust-крейт с криптографией (WireGuard через boringtun).
+└── jniLibs/             скомпилированные .so под Android (arm64-v8a, x86_64).
 ```
+
+Направление зависимостей: `feature-*` и `data` зависят от `domain`, но никогда
+наоборот. `feature-*` никогда не зависят от `data` напрямую — конкретную
+реализацию (`DefaultTunnelRepository`) связывает Koin в `app/VpnClientApp.kt`.
+Это значит, что `feature-selftest` тестируется без Android и без Rust — достаточно
+подставить fake-реализацию `TunnelRepository`.
+
+`WireguardVpnService` не может напрямую вызывать UI-код — вместо этого он
+сообщает статус через `TunnelStatusReporter` (тот же объект, что и
+`TunnelRepository`, просто другой интерфейс), а UI узнаёт об изменениях через
+`StateFlow`, не зная о существовании сервиса.
+
+**Deep links:** `vpnclient://selftest` и `vpnclient://connect` открывают
+конкретный экран напрямую, минуя навигацию внутри приложения — так фичи
+открывают друг друга по ссылке, не зная внутреннего устройства.
 
 ## Тесты Rust-ядра
 

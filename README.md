@@ -73,6 +73,15 @@ VpnClient/
 `TunnelRepository`, просто другой интерфейс), а UI узнаёт об изменениях через
 `StateFlow`, не зная о существовании сервиса.
 
+**Presentation-слой — строгий MVI**, не MVVM с прямыми вызовами методов:
+UI отправляет `Intent` (`viewModel.onIntent(SelfTestIntent.RunSelfTest)`,
+`viewModel.onIntent(ConnectIntent.Connect)`), не дёргает методы ViewModel
+напрямую. Состояние каждого экрана — один объект (`SelfTestUiState`,
+`ConnectionState`), а не разрозненные поля. Исключение — системный диалог
+`VpnService.prepare()`: платформенный шаг согласия остаётся в Composable
+(нужен Activity-контекст), реальный intent пользователя уходит в ViewModel
+только после подтверждения.
+
 **Deep links:** `vpnclient://selftest` и `vpnclient://connect` открывают
 конкретный экран напрямую, минуя навигацию внутри приложения — так фичи
 открывают друг друга по ссылке, не зная внутреннего устройства.

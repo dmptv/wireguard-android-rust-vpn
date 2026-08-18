@@ -9,20 +9,20 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 
 /**
- * Как и SelfTestViewModel, ничего не знает про VpnService или Android VPN API
- * напрямую — только про TunnelRepository. Разрешение VPN (системный диалог)
- * обрабатывает сам экран (ConnectScreen), потому что запуск диалога требует
- * Activity-контекста — это единственная часть, которую по-честному нельзя
- * вынести из UI-слоя.
+ * Строгий MVI: единственная публичная функция — onIntent(). Состояние — один
+ * объект ConnectionState (уже sealed в :domain, дополнительная обёртка не нужна).
  */
 class ConnectViewModel(
     private val repository: TunnelRepository,
 ) : ViewModel() {
 
-    val connectionState: StateFlow<ConnectionState> = repository.connectionState()
+    val state: StateFlow<ConnectionState> = repository.connectionState()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ConnectionState.Disconnected)
 
-    fun onPermissionGranted() = repository.connect()
-
-    fun disconnect() = repository.disconnect()
+    fun onIntent(intent: ConnectIntent) {
+        when (intent) {
+            ConnectIntent.Connect -> repository.connect()
+            ConnectIntent.Disconnect -> repository.disconnect()
+        }
+    }
 }

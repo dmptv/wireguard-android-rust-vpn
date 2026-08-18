@@ -22,15 +22,17 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun ConnectScreen(viewModel: ConnectViewModel = koinViewModel()) {
     val context = LocalContext.current
-    val state by viewModel.connectionState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     // VpnService.prepare() требует Activity-контекста для показа системного диалога —
     // единственное место во всём feature-connect, где приходится знать про Android VPN API.
+    // Как только разрешение получено, реальное намерение пользователя уходит
+    // в ViewModel как обычный MVI Intent — платформенный шаг сам Intent'ом не является.
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            viewModel.onPermissionGranted()
+            viewModel.onIntent(ConnectIntent.Connect)
         }
     }
 
@@ -49,7 +51,7 @@ fun ConnectScreen(viewModel: ConnectViewModel = koinViewModel()) {
                 if (permissionIntent != null) {
                     permissionLauncher.launch(permissionIntent)
                 } else {
-                    viewModel.onPermissionGranted()
+                    viewModel.onIntent(ConnectIntent.Connect)
                 }
             },
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -57,7 +59,7 @@ fun ConnectScreen(viewModel: ConnectViewModel = koinViewModel()) {
             Text("Подключиться к серверу")
         }
         Button(
-            onClick = viewModel::disconnect,
+            onClick = { viewModel.onIntent(ConnectIntent.Disconnect) },
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         ) {
             Text("Отключиться")

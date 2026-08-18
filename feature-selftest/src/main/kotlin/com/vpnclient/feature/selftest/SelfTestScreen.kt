@@ -20,18 +20,18 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SelfTestScreen(viewModel: SelfTestViewModel = koinViewModel()) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     Column(Modifier.fillMaxSize().padding(24.dp)) {
         Button(
-            onClick = viewModel::runSelfTest,
+            onClick = { viewModel.onIntent(SelfTestIntent.RunSelfTest) },
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Self-test (офлайн, без сервера)")
         }
 
         Column(Modifier.padding(top = 16.dp)) {
-            uiState.visibleSteps.forEach { step ->
+            state.visibleSteps.forEach { step ->
                 AnimatedVisibility(visible = true, enter = fadeIn() + expandVertically()) {
                     Column(Modifier.padding(vertical = 4.dp)) {
                         Text(step.label)

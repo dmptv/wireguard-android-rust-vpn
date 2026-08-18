@@ -1,8 +1,14 @@
 pipeline {
+    // Один встроенный узел на этой машине — как и в gRPC_Wallet_Demo, agent any
+    // достаточно, отдельных agent-нод с лейблами тут не настроено.
     agent any
 
+    options {
+        // Fail fast, если сборка зависнет — та же защита, что в gRPC_Wallet_Demo.
+        timeout(time: 30, unit: 'MINUTES')
+    }
+
     environment {
-        // Тот же NDK, которым мы кросс-компилировали Rust-ядро вручную.
         ANDROID_NDK_HOME = "${HOME}/Library/Android/sdk/ndk/27.0.12077973"
     }
 
@@ -29,16 +35,23 @@ pipeline {
             }
         }
 
-        stage('Archive APK') {
+        stage('Publish to Nexus') {
+            // Как и Release-стадия в gRPC_Wallet_Demo: PR/feature-ветки только
+            // доказывают, что всё собирается; публикация артефакта — только с main.
+            when {
+                branch 'main'
+            }
             steps {
-                archiveArtifacts artifacts: 'app/build/outputs/apk/debug/*.apk', fingerprint: true
+                echo 'Publish stage — здесь будет загрузка APK в Nexus (raw-репозиторий)'
+                // Реальная команда появится, когда настроим Nexus-репозиторий и credentials:
+                // sh 'curl -u $NEXUS_USER:$NEXUS_PASS --upload-file app/build/outputs/apk/debug/app-debug.apk http://localhost:8081/repository/vpnclient-apks/app-debug.apk'
             }
         }
     }
 
     post {
         always {
-            cleanWs()
+            archiveArtifacts artifacts: 'app/build/outputs/apk/debug/*.apk', allowEmptyArchive: true, fingerprint: true
         }
     }
 }

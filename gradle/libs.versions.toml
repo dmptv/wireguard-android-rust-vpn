@@ -1,0 +1,25 @@
+[versions]
+kotlin = "2.1.0"
+agp = "8.7.3"
+compileSdk = "35"
+minSdk = "24"
+activityCompose = "1.9.3"
+composeBom = "2024.12.01"
+jna = "5.15.0"
+coroutines = "1.9.0"
+
+[libraries]
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+androidx-compose-ui = { module = "androidx.compose.ui:ui" }
+androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+androidx-compose-material3 = { module = "androidx.compose.material3:material3" }
+# JNA — мост, через который сгенерированный UniFFI Kotlin-код вызывает нативную .so библиотеку.
+# @aar-классификатор обязателен именно на Android (обычная jna не грузит .so на Android правильно).
+jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
+
+[plugins]
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

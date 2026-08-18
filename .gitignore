@@ -1,0 +1,17 @@
+# Android / Gradle
+*.iml
+.gradle/
+.idea/
+.kotlin/
+local.properties
+build/
+app/build/
+captures/
+.DS_Store
+
+# Rust
+rust/vpn-core/target/
+rust/vpn-core/generated/
+
+# jniLibs/ НЕ игнорируем намеренно — прекомпилированные .so закоммичены,
+# чтобы клонировавший репозиторий мог собрать приложение сразу, без Rust/NDK.

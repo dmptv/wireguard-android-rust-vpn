@@ -1,17 +1,15 @@
 pipeline {
-    // Один встроенный узел на этой машине — как и в gRPC_Wallet_Demo, agent any
-    // достаточно, отдельных agent-нод с лейблами тут не настроено.
     agent any
 
     options {
-        // Fail fast, если сборка зависнет — та же защита, что в gRPC_Wallet_Demo.
         timeout(time: 30, unit: 'MINUTES')
     }
 
     environment {
         ANDROID_NDK_HOME = "${HOME}/Library/Android/sdk/ndk/27.0.12077973"
-        // Jenkins — фоновый сервис (launchd), не подхватывает ~/.zprofile/~/.zshrc,
-        // поэтому cargo/cargo-ndk (стоят через rustup в ~/.cargo/bin) не видны без этого.
+        // Jenkins runs as a background service and does not source shell
+        // profile files, so ~/.cargo/bin (where rustup installs cargo and
+        // cargo-ndk) is missing from PATH by default.
         PATH = "${HOME}/.cargo/bin:${env.PATH}"
     }
 
@@ -39,15 +37,13 @@ pipeline {
         }
 
         stage('Publish to Nexus') {
-            // Как и Release-стадия в gRPC_Wallet_Demo: PR/feature-ветки только
-            // доказывают, что всё собирается; публикация артефакта — только с main.
+            // Feature branches only need to prove the build succeeds;
+            // publishing an artifact happens only from main.
             when {
                 branch 'main'
             }
             steps {
-                echo 'Publish stage — здесь будет загрузка APK в Nexus (raw-репозиторий)'
-                // Реальная команда появится, когда настроим Nexus-репозиторий и credentials:
-                // sh 'curl -u $NEXUS_USER:$NEXUS_PASS --upload-file app/build/outputs/apk/debug/app-debug.apk http://localhost:8081/repository/vpnclient-apks/app-debug.apk'
+                echo 'Publish stage placeholder — uploads the APK to the Nexus repository.'
             }
         }
     }

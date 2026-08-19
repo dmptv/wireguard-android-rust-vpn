@@ -1,6 +1,6 @@
-// Чистый Kotlin JVM модуль, БЕЗ com.android.* плагинов и без Android SDK.
-// Это архитектурная гарантия: domain не может случайно начать зависеть
-// от Context, Activity или чего-либо ещё специфичного для Android.
+// A plain Kotlin JVM module, with NO com.android.* plugins and no Android SDK.
+// This is an architectural guarantee: domain cannot accidentally start
+// depending on Context, Activity, or anything else Android-specific.
 plugins {
     alias(libs.plugins.kotlinJvm)
 }
@@ -10,6 +10,6 @@ kotlin {
 }
 
 dependencies {
-    // core, не android-вариант — domain не должен тянуть Android SDK.
+    // core, not the android variant — domain must not pull in the Android SDK.
     implementation(libs.kotlinx.coroutines.core)
 }

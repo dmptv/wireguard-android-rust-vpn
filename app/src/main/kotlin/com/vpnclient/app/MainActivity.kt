@@ -16,13 +16,15 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navDeepLink
 import com.vpnclient.feature.connect.ConnectScreen
 import com.vpnclient.feature.selftest.SelfTestScreen
+import com.vpnclient.feature.servers.ServerListScreen
 
 /**
- * Тонкий модуль: MainActivity знает про существование экранов feature-модулей
- * (SelfTestScreen/ConnectScreen), но не про то, как они устроены внутри —
- * только маршруты. Deep link'и (vpnclient://selftest, vpnclient://connect)
- * позволяют попасть на конкретный экран, минуя навигацию внутри приложения —
- * так же, как реальные фичи открывают друг друга по ссылке, не зная внутренностей.
+ * Thin module: MainActivity knows the feature-module screens exist
+ * (SelfTestScreen/ConnectScreen/ServerListScreen), but nothing about how
+ * they're built internally — only their routes. Deep links
+ * (vpnclient://selftest, vpnclient://connect, vpnclient://servers) reach a
+ * specific screen directly, bypassing in-app navigation — the same way real
+ * features open one another by link without knowing each other's internals.
  */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,7 +41,13 @@ class MainActivity : ComponentActivity() {
                         onClick = { navController.navigate("connect") },
                         modifier = Modifier.padding(start = 8.dp),
                     ) {
-                        Text("Подключение")
+                        Text("Connect")
+                    }
+                    Button(
+                        onClick = { navController.navigate("servers") },
+                        modifier = Modifier.padding(start = 8.dp),
+                    ) {
+                        Text("Servers")
                     }
                 }
 
@@ -53,6 +61,11 @@ class MainActivity : ComponentActivity() {
                         route = "connect",
                         deepLinks = listOf(navDeepLink { uriPattern = "vpnclient://connect" }),
                     ) { ConnectScreen() }
+
+                    composable(
+                        route = "servers",
+                        deepLinks = listOf(navDeepLink { uriPattern = "vpnclient://servers" }),
+                    ) { ServerListScreen() }
                 }
             }
         }

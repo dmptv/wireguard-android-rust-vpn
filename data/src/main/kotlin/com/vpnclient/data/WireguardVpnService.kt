@@ -20,11 +20,10 @@ import java.net.DatagramSocket
 import java.net.InetSocketAddress
 
 /**
- * Настоящий VpnService. В отличие от исходной версии (всё было в одном
- * MainActivity), теперь сообщает реальный статус наружу через
- * TunnelStatusReporter — репозиторий (:data/DefaultTunnelRepository) реализует
- * этот интерфейс, а Koin внедряет его сюда, минуя прямую зависимость
- * сервиса от конкретного класса репозитория.
+ * The real VpnService. It reports its actual status through
+ * TunnelStatusReporter — the repository (:data/DefaultTunnelRepository)
+ * implements this interface, and Koin injects it here, so the service never
+ * depends on the concrete repository class.
  */
 class WireguardVpnService : VpnService() {
 
@@ -64,8 +63,8 @@ class WireguardVpnService : VpnService() {
         tunFd = pfd
 
         val udp = DatagramSocket()
-        // Критично: без protect() система маршрутизирует ЭТОТ сокет обратно через
-        // наш же TUN-интерфейс — получается бесконечная петля.
+        // Critical: without protect(), the system would route this very socket
+        // back through our own TUN interface — an infinite loop.
         protect(udp)
         udp.connect(InetSocketAddress(host, port))
         socket = udp
@@ -75,7 +74,7 @@ class WireguardVpnService : VpnService() {
         val tunIn = FileInputStream(pfd.fileDescriptor)
         val tunOut = FileOutputStream(pfd.fileDescriptor)
 
-        // Поток 1: пакеты из приложений телефона (TUN) -> шифруем -> шлём на сервер.
+        // Coroutine 1: packets from apps on the phone (TUN) -> encrypt -> send to the server.
         scope.launch {
             val buffer = ByteArray(2048)
             while (true) {
@@ -86,7 +85,7 @@ class WireguardVpnService : VpnService() {
             }
         }
 
-        // Поток 2: пакеты от сервера -> расшифровываем -> пишем обратно в TUN.
+        // Coroutine 2: packets from the server -> decrypt -> write back to TUN.
         scope.launch {
             val buffer = ByteArray(2048)
             while (true) {
@@ -96,7 +95,7 @@ class WireguardVpnService : VpnService() {
                 when (val action = tunnel.decapsulate(data)) {
                     is TunnAction.WriteToTunnel -> {
                         tunOut.write(action.data)
-                        statusReporter.reportConnected() // первые расшифрованные данные = сессия реально работает
+                        statusReporter.reportConnected() // first decrypted data = the session is actually working
                     }
                     is TunnAction.SendToNetwork -> udp.send(DatagramPacket(action.data, action.data.size))
                     TunnAction.Nothing -> Unit
@@ -104,7 +103,7 @@ class WireguardVpnService : VpnService() {
             }
         }
 
-        // Поток 3: раз в секунду — keepalive и повторные попытки handshake.
+        // Coroutine 3: once a second — keepalive and handshake retries.
         scope.launch {
             while (true) {
                 delay(1000)

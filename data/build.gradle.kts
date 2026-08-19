@@ -20,8 +20,8 @@ android {
     }
 
     sourceSets["main"].java.srcDirs("src/main/kotlin")
-    // Rust .so уже лежат в корне проекта — data владеет взаимодействием с нативным
-    // слоем, поэтому именно этот модуль их подключает.
+    // The Rust .so files live at the project root — data owns the interaction
+    // with the native layer, so this is the module that links them in.
     sourceSets["main"].jniLibs.srcDirs("../jniLibs")
 }
 
@@ -29,5 +29,5 @@ dependencies {
     implementation(project(":domain"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.jna) { artifact { type = "aar" } }
-    implementation(libs.koin.android) // KoinComponent для WireguardVpnService
+    implementation(libs.koin.android) // KoinComponent for WireguardVpnService
 }

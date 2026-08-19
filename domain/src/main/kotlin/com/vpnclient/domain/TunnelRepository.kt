@@ -3,25 +3,27 @@ package com.vpnclient.domain
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Контракт работы с VPN-туннелем. Ни одна feature-модуль не видит WireguardTunnel,
- * UniFFI или Android VpnService напрямую — только этот интерфейс. Реализация (:data)
- * подставляется через DI (Koin, настраивается в :app), поэтому data можно подменить
- * на fake-реализацию в тестах, не трогая feature-модули.
+ * Contract for working with the VPN tunnel. No feature module sees
+ * WireguardTunnel, UniFFI, or the Android VpnService directly — only this
+ * interface. The implementation (:data) is wired in through DI (Koin,
+ * configured in :app), so it can be swapped for a fake in tests without
+ * touching any feature module.
  */
 interface TunnelRepository {
 
     /**
-     * Офлайн-демонстрация: полный handshake между двумя туннелями внутри процесса,
-     * без сети. Возвращает список шагов целиком (сами вычисления мгновенны;
-     * анимация появления — забота presentation-слоя).
+     * Runs a full handshake between two in-process tunnels, with no network
+     * involved, to verify the cryptographic pipeline. Returns the whole
+     * list of steps at once (the computation itself is instant; staggering
+     * the reveal is the presentation layer's concern).
      */
     suspend fun runSelfTest(): List<SelfTestStep>
 
-    /** Наблюдаемое состояние подключения к настоящему серверу. */
+    /** Observable connection state to the server. */
     fun connectionState(): Flow<ConnectionState>
 
-    /** Запускает подключение к серверу (асинхронно, состояние наблюдается через connectionState()). */
-    fun connect()
+    /** Starts connecting to the given server (async; observe connectionState() for progress). */
+    fun connect(server: Server)
 
     fun disconnect()
 }

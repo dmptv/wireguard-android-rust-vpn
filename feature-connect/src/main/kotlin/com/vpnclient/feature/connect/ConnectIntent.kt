@@ -1,11 +1,12 @@
 package com.vpnclient.feature.connect
 
 /**
- * Системный диалог разрешения VPN (VpnService.prepare()) — не Intent, а
- * платформенный шаг ДО намерения пользователя: он либо пропускается (разрешение
- * уже выдано), либо блокирует Connect до подтверждения в диалоге. Поэтому
- * ConnectScreen сам решает, когда реально отправить Connect в ViewModel —
- * это не нарушает MVI, просто платформенное согласие живёт снаружи Intent-потока.
+ * The system VPN permission dialog (VpnService.prepare()) is not an Intent —
+ * it's a platform-level step BEFORE the user's actual intent: it's either
+ * skipped (permission already granted) or blocks Connect until confirmed in
+ * the dialog. That's why ConnectScreen itself decides when to actually
+ * dispatch Connect to the ViewModel — this doesn't break MVI, the platform
+ * consent step simply lives outside the Intent flow.
  */
 sealed interface ConnectIntent {
     data object Connect : ConnectIntent

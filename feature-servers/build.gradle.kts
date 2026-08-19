@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.vpnclient.feature.selftest"
+    namespace = "com.vpnclient.feature.servers"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
@@ -28,8 +28,8 @@ android {
 }
 
 dependencies {
-    // Only :domain — feature-selftest does NOT know about :data, UniFFI, or Rust.
-    // The TunnelRepository implementation is wired in at runtime by Koin, configured in :app.
+    // Only :domain — feature-servers depends on ServerRepository, never on
+    // the concrete InMemoryServerRepository implementation from :data.
     implementation(project(":domain"))
 
     implementation(platform(libs.androidx.compose.bom))

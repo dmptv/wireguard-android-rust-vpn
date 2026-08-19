@@ -32,11 +32,12 @@ android {
 }
 
 dependencies {
-    // app — тонкий модуль: собирает всё воедино, сам почти не содержит логики.
+    // app is a thin module: it wires everything together and contains almost no logic itself.
     implementation(project(":domain"))
     implementation(project(":data"))
     implementation(project(":feature-selftest"))
     implementation(project(":feature-connect"))
+    implementation(project(":feature-servers"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

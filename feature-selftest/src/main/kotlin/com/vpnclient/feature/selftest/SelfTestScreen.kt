@@ -27,7 +27,7 @@ fun SelfTestScreen(viewModel: SelfTestViewModel = koinViewModel()) {
             onClick = { viewModel.onIntent(SelfTestIntent.RunSelfTest) },
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Self-test (офлайн, без сервера)")
+            Text("Self-test (offline, no server)")
         }
 
         Column(Modifier.padding(top = 16.dp)) {

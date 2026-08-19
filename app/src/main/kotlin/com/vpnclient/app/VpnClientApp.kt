@@ -2,10 +2,13 @@ package com.vpnclient.app
 
 import android.app.Application
 import com.vpnclient.data.DefaultTunnelRepository
+import com.vpnclient.data.InMemoryServerRepository
+import com.vpnclient.domain.ServerRepository
 import com.vpnclient.domain.TunnelRepository
 import com.vpnclient.domain.TunnelStatusReporter
 import com.vpnclient.feature.connect.ConnectViewModel
 import com.vpnclient.feature.selftest.SelfTestViewModel
+import com.vpnclient.feature.servers.ServerListViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -26,8 +29,11 @@ private val appModule = module {
         DefaultTunnelRepository(androidContext())
     } binds arrayOf(TunnelRepository::class, TunnelStatusReporter::class)
 
+    single<ServerRepository> { InMemoryServerRepository() }
+
     viewModel { SelfTestViewModel(get()) }
-    viewModel { ConnectViewModel(get()) }
+    viewModel { ConnectViewModel(get(), get()) }
+    viewModel { ServerListViewModel(get()) }
 }
 
 class VpnClientApp : Application() {

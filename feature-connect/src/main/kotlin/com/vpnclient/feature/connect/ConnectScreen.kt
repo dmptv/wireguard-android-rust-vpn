@@ -39,10 +39,10 @@ fun ConnectScreen(viewModel: ConnectViewModel = koinViewModel()) {
     Column(Modifier.fillMaxSize().padding(24.dp)) {
         Text(
             when (val s = state) {
-                ConnectionState.Disconnected -> "Отключено"
-                ConnectionState.Connecting -> "Подключение…"
-                ConnectionState.Connected -> "✅ Подключено"
-                is ConnectionState.Failed -> "❌ Ошибка: ${s.reason}"
+                ConnectionState.Disconnected -> "Disconnected"
+                ConnectionState.Connecting -> "Connecting…"
+                ConnectionState.Connected -> "✅ Connected"
+                is ConnectionState.Failed -> "❌ Error: ${s.reason}"
             },
         )
         Button(
@@ -56,13 +56,13 @@ fun ConnectScreen(viewModel: ConnectViewModel = koinViewModel()) {
             },
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         ) {
-            Text("Подключиться к серверу")
+            Text("Connect to server")
         }
         Button(
             onClick = { viewModel.onIntent(ConnectIntent.Disconnect) },
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         ) {
-            Text("Отключиться")
+            Text("Disconnect")
         }
     }
 }

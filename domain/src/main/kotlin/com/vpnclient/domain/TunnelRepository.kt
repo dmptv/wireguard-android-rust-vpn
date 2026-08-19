@@ -12,18 +12,18 @@ import kotlinx.coroutines.flow.Flow
 interface TunnelRepository {
 
     /**
-     * Offline demo: a full handshake between two in-process tunnels, no
-     * network involved. Returns the whole list of steps at once (the
-     * computation itself is instant; staggering the reveal is the
-     * presentation layer's concern).
+     * Runs a full handshake between two in-process tunnels, with no network
+     * involved, to verify the cryptographic pipeline. Returns the whole
+     * list of steps at once (the computation itself is instant; staggering
+     * the reveal is the presentation layer's concern).
      */
     suspend fun runSelfTest(): List<SelfTestStep>
 
-    /** Observable connection state to the real server. */
+    /** Observable connection state to the server. */
     fun connectionState(): Flow<ConnectionState>
 
-    /** Starts connecting to the server (async; observe connectionState() for progress). */
-    fun connect()
+    /** Starts connecting to the given server (async; observe connectionState() for progress). */
+    fun connect(server: Server)
 
     fun disconnect()
 }

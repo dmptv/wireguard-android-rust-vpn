@@ -1,19 +1,20 @@
-// Минимальный "живой" WireGuard-сервер для проверки, что Android-клиент реально
-// устанавливает handshake с настоящим процессом по настоящему UDP, а не только
-// с объектом в той же памяти.
+// Minimal standalone WireGuard responder, used to verify that a client
+// establishes a handshake with a real separate process over real UDP,
+// not just with an object living in the same process memory.
 //
-// Запуск:  cargo run --bin test_server -- 51820
-// Печатает публичный ключ сервера — его надо вставить в приложение как "peer public key".
+// Usage: cargo run --bin test_server -- 51820
+// Prints the server's public key — enter it in the client app as its
+// "peer public key".
 
 use std::env;
 use std::net::UdpSocket;
 use vpn_core::{TunnAction, WireguardTunnel};
 
-// Фиксированные ключи — сгенерированы один раз и захардкожены с обеих сторон
-// (тут и в MainActivity.kt), точно так же, как настоящий VPN-провайдер один раз
-// прописывает ключ клиента на своём сервере при регистрации аккаунта.
-// В реальном проде так делать нельзя (приватный ключ сервера не должен лежать в git),
-// но для локальной демонстрации — нормально и предсказуемо.
+// Fixed keys, generated once and hardcoded on both sides (here and in the
+// client app) — the same way a real VPN provider registers a client's key
+// on its server once, at account setup. A private key checked into a
+// public repository is not something you would do in production; it's
+// fine for a local, reproducible demo.
 const SERVER_PRIVATE_KEY: &str = "+U89ptK1MxzEk4Y0v+Ig0CM3FgvShytJiSJzHsRamTk=";
 const CLIENT_PUBLIC_KEY: &str = "6IUSlHr4Y2NWXlE6kFJxW9i2mwQCrK36kydYTdBnLDA=";
 
@@ -27,8 +28,8 @@ fn main() {
         .expect("valid keys");
 
     let socket = UdpSocket::bind(("0.0.0.0", port)).expect("failed to bind UDP socket");
-    println!("Тестовый WireGuard-сервер слушает порт {port}, ключи фиксированные");
-    println!("Ожидаю подключение...");
+    println!("Test WireGuard server listening on port {port} with fixed keys");
+    println!("Waiting for a connection...");
 
     let mut buf = [0u8; 2048];
     loop {
@@ -36,11 +37,11 @@ fn main() {
         match tunnel.decapsulate(buf[..n].to_vec()) {
             TunnAction::SendToNetwork { data } => {
                 socket.send_to(&data, from).ok();
-                println!("[handshake] ответил клиенту {from}");
+                println!("[handshake] replied to {from}");
             }
             TunnAction::WriteToTunnel { data } => {
                 println!(
-                    "[data] получен расшифрованный пакет от {from}, {} байт: {:?}",
+                    "[data] received a decrypted packet from {from}, {} bytes: {:?}",
                     data.len(),
                     String::from_utf8_lossy(&data)
                 );

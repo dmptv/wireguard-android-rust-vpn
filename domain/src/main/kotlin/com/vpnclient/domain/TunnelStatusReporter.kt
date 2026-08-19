@@ -1,10 +1,11 @@
 package com.vpnclient.domain
 
 /**
- * Обратный канал: WireguardVpnService (живёт в :data) сообщает репозиторию о
- * реальном статусе, а не притворяется, что "подключено" сразу после старта сервиса.
- * Отдельный от TunnelRepository интерфейс, потому что у него другой потребитель
- * (сервис, а не UI) — не стоит смешивать в одном контракте.
+ * A back-channel: WireguardVpnService (lives in :data) reports the actual
+ * connection status back to the repository, instead of the UI optimistically
+ * assuming "connected" right after starting the service. Kept separate from
+ * TunnelRepository because it has a different consumer (the service, not
+ * the UI) — the two contracts shouldn't be mixed.
  */
 interface TunnelStatusReporter {
     fun reportConnecting()

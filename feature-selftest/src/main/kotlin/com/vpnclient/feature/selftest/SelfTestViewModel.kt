@@ -16,9 +16,9 @@ data class SelfTestUiState(
 )
 
 /**
- * Строгий MVI: единственная публичная функция — onIntent(). ViewModel не знает
- * про WireguardTunnel/UniFFI вообще — только про TunnelRepository.runSelfTest(),
- * которую подставит Koin (реализация в :data).
+ * Strict MVI: the only public function is onIntent(). The ViewModel knows
+ * nothing about WireguardTunnel or UniFFI — only about
+ * TunnelRepository.runSelfTest(), whose implementation Koin injects (from :data).
  */
 class SelfTestViewModel(
     private val repository: TunnelRepository,
@@ -38,8 +38,8 @@ class SelfTestViewModel(
         viewModelScope.launch {
             val allSteps = repository.runSelfTest()
             _state.value = SelfTestUiState(visibleSteps = emptyList(), isRunning = true)
-            // Крипто-вычисления мгновенны — "проигрываем" появление шагов сами,
-            // это чисто визуальный эффект, отдельный от самого вычисления.
+            // The crypto itself is instant — we stagger the reveal of steps
+            // ourselves, purely as a visual effect separate from the computation.
             for (i in allSteps.indices) {
                 _state.value = _state.value.copy(visibleSteps = allSteps.take(i + 1))
                 delay(350)

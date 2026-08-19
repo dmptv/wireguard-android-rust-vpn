@@ -1,8 +1,9 @@
 package com.vpnclient.domain
 
 /**
- * Один шаг офлайн-демонстрации handshake. Presentation-слой (feature-selftest)
- * ничего не знает о WireGuard/UniFFI — только об этой чистой модели.
+ * A single step of the offline handshake demo. The presentation layer
+ * (feature-selftest) knows nothing about WireGuard or UniFFI — only this
+ * plain model.
  */
 data class SelfTestStep(
     val label: String,

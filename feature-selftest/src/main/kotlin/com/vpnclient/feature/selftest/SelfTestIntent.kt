@@ -1,10 +1,10 @@
 package com.vpnclient.feature.selftest
 
 /**
- * Единственный вход в ViewModel — UI не вызывает методы напрямую (viewModel.foo()),
- * а отправляет Intent через viewModel.onIntent(...). Сейчас действие одно,
- * но по мере роста приложения новые действия — это новые case здесь,
- * а не новые публичные методы ViewModel.
+ * The single entry point into the ViewModel — the UI never calls methods
+ * directly (viewModel.foo()), it dispatches an Intent via
+ * viewModel.onIntent(...). There's only one action today, but as the app
+ * grows, new actions become new cases here, not new public ViewModel methods.
  */
 sealed interface SelfTestIntent {
     data object RunSelfTest : SelfTestIntent

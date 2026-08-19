@@ -14,11 +14,12 @@ import org.koin.dsl.binds
 import org.koin.dsl.module
 
 /**
- * Единственное место во всём проекте, где известны конкретные реализации —
- * feature-модули и WireguardVpnService видят только интерфейсы из :domain.
- * DefaultTunnelRepository регистрируется сразу под ДВУМЯ типами (`binds`),
- * потому что это один и тот же объект и для UI (TunnelRepository), и для
- * сервиса, который сообщает статус (TunnelStatusReporter) — состояние общее.
+ * The only place in the whole project that knows about concrete
+ * implementations — feature modules and WireguardVpnService only ever see
+ * interfaces from :domain. DefaultTunnelRepository is registered under BOTH
+ * types (`binds`) because it's the same object serving the UI
+ * (TunnelRepository) and the service that reports status
+ * (TunnelStatusReporter) — the state is shared.
  */
 private val appModule = module {
     single {

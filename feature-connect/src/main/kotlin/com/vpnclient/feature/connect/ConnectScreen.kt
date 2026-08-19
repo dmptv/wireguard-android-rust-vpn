@@ -24,10 +24,10 @@ fun ConnectScreen(viewModel: ConnectViewModel = koinViewModel()) {
     val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    // VpnService.prepare() требует Activity-контекста для показа системного диалога —
-    // единственное место во всём feature-connect, где приходится знать про Android VPN API.
-    // Как только разрешение получено, реальное намерение пользователя уходит
-    // в ViewModel как обычный MVI Intent — платформенный шаг сам Intent'ом не является.
+    // VpnService.prepare() needs an Activity context to show the system dialog —
+    // the only place in feature-connect that has to know about the Android VPN API.
+    // Once permission is granted, the user's actual intent flows to the
+    // ViewModel as a regular MVI Intent — the platform step itself isn't one.
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) { result ->

@@ -1,7 +1,8 @@
-// Одноразовый тестовый клиент — только чтобы САМОМУ проверить, что test_server реально
-// отвечает по-настоящему через сеть, прежде чем гонять то же самое через Android-эмулятор.
+// One-shot test client, used to verify that test_server responds correctly
+// over a real network connection before driving the same flow from the
+// Android emulator.
 //
-// Запуск: cargo run --bin test_client -- <port> <server_pub_key_b64> <client_priv_key_b64>
+// Usage: cargo run --bin test_client -- <port> <server_pub_key_b64> <client_priv_key_b64>
 
 use std::env;
 use std::net::UdpSocket;
@@ -27,18 +28,18 @@ fn main() {
         other => panic!("unexpected: {other:?}"),
     };
     socket.send(&init).expect("send failed");
-    println!("отправил handshake init, {} байт", init.len());
+    println!("sent handshake init, {} bytes", init.len());
 
     let n = socket.recv(&mut buf).expect("recv failed");
-    println!("получил ответ от сервера, {n} байт");
+    println!("received response from server, {n} bytes");
     tunnel.decapsulate(buf[..n].to_vec());
 
-    println!("handshake завершён, is_expired = {}", tunnel.is_expired());
+    println!("handshake complete, is_expired = {}", tunnel.is_expired());
 
     let encrypted = match tunnel.encapsulate(b"hello from real network test".to_vec()) {
         TunnAction::SendToNetwork { data } => data,
         other => panic!("unexpected: {other:?}"),
     };
     socket.send(&encrypted).expect("send data failed");
-    println!("отправил зашифрованное сообщение, {} байт", encrypted.len());
+    println!("sent encrypted message, {} bytes", encrypted.len());
 }

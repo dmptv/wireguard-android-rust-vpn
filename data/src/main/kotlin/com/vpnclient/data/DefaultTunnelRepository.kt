@@ -12,9 +12,9 @@ import uniffi.vpn_core.TunnAction
 import uniffi.vpn_core.WireguardTunnel
 import uniffi.vpn_core.generateKeypair
 
-// Захардкоженная конфигурация настоящего подключения — как у коммерческих VPN
-// клиентов, пользователь не вводит адрес сервера и ключи сам. Работает только
-// если рядом реально запущен сервер с этими же ключами: rust/vpn-core/src/bin/test_server.rs.
+// Hardcoded configuration for the real connection — as with commercial VPN
+// clients, the user never enters a server address or keys. Only works while
+// a server with these same keys is actually running: rust/vpn-core/src/bin/test_server.rs.
 private object VpnConfig {
     const val SERVER_HOST = "10.0.2.2"
     const val SERVER_PORT = 51999
@@ -26,11 +26,12 @@ private fun hexPreview(bytes: ByteArray): String =
     bytes.take(8).joinToString(" ") { "%02x".format(it) } + "…"
 
 /**
- * Единственная реализация обоих доменных контрактов:
- *  - TunnelRepository — то, что видит UI (feature-модули) через DI;
- *  - TunnelStatusReporter — то, что видит WireguardVpnService (обратный канал статуса).
- * Оба интерфейса реализует один класс намеренно: это единственное место, где живёт
- * реальное состояние подключения, и WireguardVpnService, и UI видят одну и ту же правду.
+ * The single implementation of both domain contracts:
+ *  - TunnelRepository — what the UI (feature modules) sees through DI;
+ *  - TunnelStatusReporter — what WireguardVpnService sees (the status back-channel).
+ * One class implements both interfaces deliberately: this is the single place
+ * where the real connection state lives, so WireguardVpnService and the UI
+ * always see the same truth.
  */
 class DefaultTunnelRepository(
     private val context: Context,
@@ -54,7 +55,7 @@ class DefaultTunnelRepository(
         context.stopService(Intent(context, WireguardVpnService::class.java))
     }
 
-    // --- TunnelStatusReporter: сюда пишет только WireguardVpnService ---
+    // --- TunnelStatusReporter: only WireguardVpnService writes here ---
     override fun reportConnecting() {
         _connectionState.value = ConnectionState.Connecting
     }
@@ -71,7 +72,7 @@ class DefaultTunnelRepository(
         _connectionState.value = ConnectionState.Failed(reason)
     }
 
-    // --- Self-test: полностью офлайн, к сервису/сети отношения не имеет ---
+    // --- Self-test: fully offline, unrelated to the service or the network ---
     override suspend fun runSelfTest(): List<SelfTestStep> {
         val clientKeys = generateKeypair()
         val serverKeys = generateKeypair()

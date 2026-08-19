@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 
 /**
- * Строгий MVI: единственная публичная функция — onIntent(). Состояние — один
- * объект ConnectionState (уже sealed в :domain, дополнительная обёртка не нужна).
+ * Strict MVI: the only public function is onIntent(). The state is a single
+ * ConnectionState object (already sealed in :domain, no extra wrapper needed).
  */
 class ConnectViewModel(
     private val repository: TunnelRepository,

@@ -841,19 +841,19 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_vpn_core_checksum_func_generate_keypair() != 29594) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_vpn_core_checksum_method_wireguardtunnel_decapsulate() != 47601) {
+    if (lib.uniffi_vpn_core_checksum_method_wireguardtunnel_decapsulate() != 52458) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_vpn_core_checksum_method_wireguardtunnel_encapsulate() != 59973) {
+    if (lib.uniffi_vpn_core_checksum_method_wireguardtunnel_encapsulate() != 37540) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_vpn_core_checksum_method_wireguardtunnel_is_expired() != 65012) {
+    if (lib.uniffi_vpn_core_checksum_method_wireguardtunnel_is_expired() != 17924) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_vpn_core_checksum_method_wireguardtunnel_tick() != 41064) {
+    if (lib.uniffi_vpn_core_checksum_method_wireguardtunnel_tick() != 18152) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_vpn_core_checksum_constructor_wireguardtunnel_new() != 52793) {
+    if (lib.uniffi_vpn_core_checksum_constructor_wireguardtunnel_new() != 59370) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -1209,33 +1209,33 @@ public object FfiConverterByteArray: FfiConverterRustBuffer<ByteArray> {
 
 
 /**
- * Обёртка над `boringtun::noise::Tunn` — сам туннель WireGuard.
- * Мьютекс внутри нужен, потому что Tunn не потокобезопасен сам по себе
- * (у него изменяемое состояние: сессии, таймеры) — так же делает и сам boringtun в своём JNI.
+ * Wraps `boringtun::noise::Tunn` — the WireGuard tunnel state machine itself.
+ * The mutex is required because `Tunn` is not thread-safe on its own (it holds
+ * mutable state: sessions, timers) — boringtun's own JNI bindings do the same.
  */
 public interface WireguardTunnelInterface {
     
     /**
-     * Принимает UDP-датаграмму, пришедшую от сервера, и решает, что с ней делать:
-     * записать расшифрованные данные в TUN или отправить ответный пакет по сети
-     * (это происходит во время handshake).
+     * Accepts a UDP datagram received from the peer and decides what to do
+     * with it: write decrypted data to TUN, or send a reply packet back over
+     * the network (this happens during the handshake).
      */
     fun `decapsulate`(`datagram`: kotlin.ByteArray): TunnAction
     
     /**
-     * Принимает сырой IP-пакет из TUN-интерфейса (или пустой срез — тогда это
-     * способ запустить/повторить handshake) и решает, что с ним делать дальше.
+     * Accepts a raw IP packet from the TUN interface (or an empty slice, which
+     * starts or retries the handshake) and decides what to do with it next.
      */
     fun `encapsulate`(`packet`: kotlin.ByteArray): TunnAction
     
     /**
-     * Проверка, что туннель ещё жив (сессия не протухла).
+     * Whether the tunnel is still alive (the session hasn't gone stale).
      */
     fun `isExpired`(): kotlin.Boolean
     
     /**
-     * Периодический вызов (обычно раз в секунду) — держит handshake живым,
-     * шлёт keepalive-пакеты, повторяет handshake, если сервер не ответил вовремя.
+     * Periodic call (typically once per second) — keeps the handshake alive,
+     * sends keepalive packets, and retries the handshake if the peer is silent.
      */
     fun `tick`(): TunnAction
     
@@ -1243,9 +1243,9 @@ public interface WireguardTunnelInterface {
 }
 
 /**
- * Обёртка над `boringtun::noise::Tunn` — сам туннель WireGuard.
- * Мьютекс внутри нужен, потому что Tunn не потокобезопасен сам по себе
- * (у него изменяемое состояние: сессии, таймеры) — так же делает и сам boringtun в своём JNI.
+ * Wraps `boringtun::noise::Tunn` — the WireGuard tunnel state machine itself.
+ * The mutex is required because `Tunn` is not thread-safe on its own (it holds
+ * mutable state: sessions, timers) — boringtun's own JNI bindings do the same.
  */
 open class WireguardTunnel: Disposable, AutoCloseable, WireguardTunnelInterface
 {
@@ -1272,7 +1272,7 @@ open class WireguardTunnel: Disposable, AutoCloseable, WireguardTunnelInterface
         this.cleanable = null
     }
     /**
-     * Создаёт туннель из своего приватного ключа и публичного ключа собеседника (пира).
+     * Creates a tunnel from this side's private key and the peer's public key.
      */
     constructor(`privateKeyBase64`: kotlin.String, `peerPublicKeyBase64`: kotlin.String) :
         this(UniffiWithHandle, 
@@ -1363,9 +1363,9 @@ open class WireguardTunnel: Disposable, AutoCloseable, WireguardTunnelInterface
 
     
     /**
-     * Принимает UDP-датаграмму, пришедшую от сервера, и решает, что с ней делать:
-     * записать расшифрованные данные в TUN или отправить ответный пакет по сети
-     * (это происходит во время handshake).
+     * Accepts a UDP datagram received from the peer and decides what to do
+     * with it: write decrypted data to TUN, or send a reply packet back over
+     * the network (this happens during the handshake).
      */override fun `decapsulate`(`datagram`: kotlin.ByteArray): TunnAction {
             return FfiConverterTypeTunnAction.lift(
     callWithHandle {
@@ -1382,8 +1382,8 @@ open class WireguardTunnel: Disposable, AutoCloseable, WireguardTunnelInterface
 
     
     /**
-     * Принимает сырой IP-пакет из TUN-интерфейса (или пустой срез — тогда это
-     * способ запустить/повторить handshake) и решает, что с ним делать дальше.
+     * Accepts a raw IP packet from the TUN interface (or an empty slice, which
+     * starts or retries the handshake) and decides what to do with it next.
      */override fun `encapsulate`(`packet`: kotlin.ByteArray): TunnAction {
             return FfiConverterTypeTunnAction.lift(
     callWithHandle {
@@ -1400,7 +1400,7 @@ open class WireguardTunnel: Disposable, AutoCloseable, WireguardTunnelInterface
 
     
     /**
-     * Проверка, что туннель ещё жив (сессия не протухла).
+     * Whether the tunnel is still alive (the session hasn't gone stale).
      */override fun `isExpired`(): kotlin.Boolean {
             return FfiConverterBoolean.lift(
     callWithHandle {
@@ -1416,8 +1416,8 @@ open class WireguardTunnel: Disposable, AutoCloseable, WireguardTunnelInterface
 
     
     /**
-     * Периодический вызов (обычно раз в секунду) — держит handshake живым,
-     * шлёт keepalive-пакеты, повторяет handshake, если сервер не ответил вовремя.
+     * Periodic call (typically once per second) — keeps the handshake alive,
+     * sends keepalive packets, and retries the handshake if the peer is silent.
      */override fun `tick`(): TunnAction {
             return FfiConverterTypeTunnAction.lift(
     callWithHandle {
@@ -1510,13 +1510,13 @@ public object FfiConverterTypeKeyPair: FfiConverterRustBuffer<KeyPair> {
 
 
 /**
- * Что делать с результатом encapsulate/decapsulate/tick — на Kotlin-стороне
- * это станет sealed-подобным enum, по которому удобно сделать `when`.
+ * Outcome of encapsulate/decapsulate/tick — maps to a sealed-style Kotlin
+ * enum on the other side of the FFI boundary, suitable for an exhaustive `when`.
  */
 sealed class TunnAction {
     
     /**
-     * Отправить эти байты по UDP на сервер.
+     * Send these bytes over UDP to the peer.
      */
     data class SendToNetwork(
         val `data`: kotlin.ByteArray) : TunnAction()
@@ -1528,7 +1528,7 @@ sealed class TunnAction {
     }
     
     /**
-     * Записать эти (уже расшифрованные) байты в TUN-интерфейс — это IP-пакет для приложений.
+     * Write these already-decrypted bytes to the TUN interface (an IP packet for apps).
      */
     data class WriteToTunnel(
         val `data`: kotlin.ByteArray) : TunnAction()
@@ -1540,7 +1540,7 @@ sealed class TunnAction {
     }
     
     /**
-     * Ничего делать не нужно (например, дубликат keepalive или ошибка на низком уровне).
+     * Nothing to do (e.g. a duplicate keepalive or a low-level error).
      */
     object Nothing : TunnAction()
     

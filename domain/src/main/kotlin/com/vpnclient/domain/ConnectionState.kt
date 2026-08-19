@@ -1,8 +1,9 @@
 package com.vpnclient.domain
 
 /**
- * Состояние подключения к настоящему WireGuard-серверу.
- * sealed — feature-connect обязан обработать все случаи в `when`, компилятор проверит.
+ * Connection state to a real WireGuard server.
+ * `sealed` so feature-connect must handle every case in a `when` — enforced
+ * by the compiler.
  */
 sealed interface ConnectionState {
     data object Disconnected : ConnectionState

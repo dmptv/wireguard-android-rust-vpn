@@ -10,6 +10,9 @@ pipeline {
 
     environment {
         ANDROID_NDK_HOME = "${HOME}/Library/Android/sdk/ndk/27.0.12077973"
+        // Jenkins — фоновый сервис (launchd), не подхватывает ~/.zprofile/~/.zshrc,
+        // поэтому cargo/cargo-ndk (стоят через rustup в ~/.cargo/bin) не видны без этого.
+        PATH = "${HOME}/.cargo/bin:${env.PATH}"
     }
 
     stages {

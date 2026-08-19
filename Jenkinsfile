@@ -6,6 +6,11 @@ pipeline {
     }
 
     environment {
+        // local.properties (which normally holds sdk.dir) is intentionally
+        // gitignored — it's machine-specific — so Jenkins clones the repo
+        // into a fresh workspace with no local.properties at all. Gradle's
+        // Android plugin also accepts the SDK location via ANDROID_HOME.
+        ANDROID_HOME = "${HOME}/Library/Android/sdk"
         ANDROID_NDK_HOME = "${HOME}/Library/Android/sdk/ndk/27.0.12077973"
         // Jenkins runs as a background service and does not source shell
         // profile files, so ~/.cargo/bin (where rustup installs cargo and

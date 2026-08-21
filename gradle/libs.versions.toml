@@ -10,6 +10,14 @@ coroutines = "1.9.0"
 koin = "4.0.0"
 navigationCompose = "2.8.4"
 lifecycle = "2.8.7"
+junit4 = "4.13.2"
+junit5 = "5.11.3"
+mockito = "5.14.2"
+mockitoKotlin = "5.4.0"
+robolectric = "4.14.1"
+androidxTestExtJunit = "1.2.1"
+androidxCoreTesting = "2.2.0"
+espresso = "3.6.1"
 
 [libraries]
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
@@ -19,14 +27,25 @@ androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = 
 androidx-compose-ui = { module = "androidx.compose.ui:ui" }
 androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 androidx-compose-material3 = { module = "androidx.compose.material3:material3" }
-# JNA — мост, через который сгенерированный UniFFI Kotlin-код вызывает нативную .so библиотеку.
-# @aar-классификатор обязателен именно на Android (обычная jna не грузит .so на Android правильно).
+# JNA — the bridge through which UniFFI-generated Kotlin code calls the native .so library.
+# The @aar classifier is required specifically on Android (plain jna does not load .so files correctly there).
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+junit5-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit5" }
+junit5-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit5" }
+junit5-vintage-engine = { module = "org.junit.vintage:junit-vintage-engine", version.ref = "junit5" }
+junit4 = { module = "junit:junit", version.ref = "junit4" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockitoKotlin" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidxTestExtJunit" }
+androidx-core-testing = { module = "androidx.arch.core:core-testing", version.ref = "androidxCoreTesting" }
+androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

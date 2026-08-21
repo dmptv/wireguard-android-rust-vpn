@@ -22,8 +22,11 @@ class ConnectViewModel(
     val state: StateFlow<ConnectionState> = repository.connectionState()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ConnectionState.Disconnected)
 
+    // Eagerly, not WhileSubscribed: nothing ever collects this flow directly —
+    // onIntent only reads .value — so WhileSubscribed would never see a
+    // subscriber and this would stay stuck at its initial null forever.
     private val selectedServer: StateFlow<Server?> = serverRepository.selectedServer()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     fun onIntent(intent: ConnectIntent) {
         when (intent) {

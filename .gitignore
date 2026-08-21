@@ -13,5 +13,5 @@ captures/
 rust/vpn-core/target/
 rust/vpn-core/generated/
 
-# jniLibs/ НЕ игнорируем намеренно — прекомпилированные .so закоммичены,
-# чтобы клонировавший репозиторий мог собрать приложение сразу, без Rust/NDK.
+# jniLibs/ is deliberately NOT ignored — the prebuilt .so files are committed
+# so a fresh clone can build the app immediately, without Rust/NDK installed.

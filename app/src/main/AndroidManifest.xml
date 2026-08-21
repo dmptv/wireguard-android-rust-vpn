@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Сервис WireguardVpnService объявлен в манифесте :data — Android сам
-         сольёт его сюда при сборке финального APK (manifest merger). -->
+    <!-- WireguardVpnService is declared in :data's manifest — Android merges it
+         in here automatically when building the final APK (manifest merger). -->
 
     <application
         android:name=".VpnClientApp"
@@ -18,7 +18,7 @@
             </intent-filter>
 
             <!-- Deep links: vpnclient://selftest, vpnclient://connect —
-                 обрабатываются Navigation Compose внутри NavHost (см. MainActivity). -->
+                 handled by Navigation Compose inside NavHost (see MainActivity). -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />

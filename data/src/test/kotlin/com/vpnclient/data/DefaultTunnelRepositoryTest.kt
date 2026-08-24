@@ -2,14 +2,23 @@ package com.vpnclient.data
 
 import android.app.Application
 import com.vpnclient.domain.ConnectionState
+import com.vpnclient.domain.DataError
+import com.vpnclient.domain.Result
 import com.vpnclient.domain.Server
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.kotlin.any
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
+import uniffi.vpn_core.TunnAction
+import uniffi.vpn_core.WireguardTunnel
 
 @RunWith(RobolectricTestRunner::class)
 class DefaultTunnelRepositoryTest {
@@ -69,5 +78,73 @@ class DefaultTunnelRepositoryTest {
 
         repository.reportDisconnected()
         assertEquals(ConnectionState.Disconnected, repository.connectionState().value)
+    }
+
+    @Test
+    fun `runSelfTest returns Success with every step when the handshake completes`() = runTest {
+        val client = mock<WireguardTunnel>()
+        val server = mock<WireguardTunnel>()
+        whenever(client.encapsulate(any())).thenReturn(
+            TunnAction.SendToNetwork(byteArrayOf(1)),
+            TunnAction.SendToNetwork(byteArrayOf(3)),
+        )
+        whenever(server.decapsulate(any())).thenReturn(TunnAction.SendToNetwork(byteArrayOf(2)))
+        whenever(client.decapsulate(any())).thenReturn(TunnAction.Nothing)
+        val repositoryUnderTest = DefaultTunnelRepository(context) { client to server }
+
+        val result = repositoryUnderTest.runSelfTest()
+
+        check(result is Result.Success)
+        assertEquals(6, result.data.size)
+        verify(client).close()
+        verify(server).close()
+    }
+
+    @Test
+    fun `runSelfTest returns HANDSHAKE_FAILED when the client does not produce a handshake init`() = runTest {
+        val client = mock<WireguardTunnel>()
+        val server = mock<WireguardTunnel>()
+        whenever(client.encapsulate(any())).thenReturn(TunnAction.Nothing)
+        val repositoryUnderTest = DefaultTunnelRepository(context) { client to server }
+
+        val result = repositoryUnderTest.runSelfTest()
+
+        assertEquals(Result.Error(DataError.Local.HANDSHAKE_FAILED), result)
+        verify(client).close()
+        verify(server).close()
+    }
+
+    @Test
+    fun `runSelfTest returns HANDSHAKE_FAILED when the server does not respond to the handshake`() = runTest {
+        val client = mock<WireguardTunnel>()
+        val server = mock<WireguardTunnel>()
+        whenever(client.encapsulate(any())).thenReturn(TunnAction.SendToNetwork(byteArrayOf(1)))
+        whenever(server.decapsulate(any())).thenReturn(TunnAction.Nothing)
+        val repositoryUnderTest = DefaultTunnelRepository(context) { client to server }
+
+        val result = repositoryUnderTest.runSelfTest()
+
+        assertEquals(Result.Error(DataError.Local.HANDSHAKE_FAILED), result)
+        verify(client).close()
+        verify(server).close()
+    }
+
+    @Test
+    fun `runSelfTest returns HANDSHAKE_FAILED when the payload is not encrypted`() = runTest {
+        val client = mock<WireguardTunnel>()
+        val server = mock<WireguardTunnel>()
+        whenever(client.encapsulate(any())).thenReturn(
+            TunnAction.SendToNetwork(byteArrayOf(1)),
+            TunnAction.Nothing,
+        )
+        whenever(server.decapsulate(any())).thenReturn(TunnAction.SendToNetwork(byteArrayOf(2)))
+        whenever(client.decapsulate(any())).thenReturn(TunnAction.Nothing)
+        val repositoryUnderTest = DefaultTunnelRepository(context) { client to server }
+
+        val result = repositoryUnderTest.runSelfTest()
+
+        assertEquals(Result.Error(DataError.Local.HANDSHAKE_FAILED), result)
+        verify(client).close()
+        verify(server).close()
     }
 }

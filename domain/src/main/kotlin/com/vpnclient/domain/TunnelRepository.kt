@@ -17,7 +17,7 @@ interface TunnelRepository {
      * list of steps at once (the computation itself is instant; staggering
      * the reveal is the presentation layer's concern).
      */
-    suspend fun runSelfTest(): List<SelfTestStep>
+    suspend fun runSelfTest(): Result<List<SelfTestStep>, DataError.Local>
 
     /** Observable connection state to the server. */
     fun connectionState(): Flow<ConnectionState>

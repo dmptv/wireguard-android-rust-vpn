@@ -12,4 +12,11 @@ kotlin {
 dependencies {
     // core, not the android variant — domain must not pull in the Android SDK.
     implementation(libs.kotlinx.coroutines.core)
+
+    testImplementation(libs.junit5.jupiter)
+    testRuntimeOnly(libs.junit5.jupiter.engine)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

@@ -3,6 +3,8 @@ package com.vpnclient.data
 import android.content.Context
 import android.content.Intent
 import com.vpnclient.domain.ConnectionState
+import com.vpnclient.domain.DataError
+import com.vpnclient.domain.Result
 import com.vpnclient.domain.SelfTestStep
 import com.vpnclient.domain.Server
 import com.vpnclient.domain.TunnelRepository
@@ -32,6 +34,14 @@ private fun hexPreview(bytes: ByteArray): String =
  */
 class DefaultTunnelRepository(
     private val context: Context,
+    // Seam for tests: the default generates a fresh in-process key pair and
+    // real (native-backed) tunnels; tests substitute fakes instead.
+    private val createTunnelPair: () -> Pair<WireguardTunnel, WireguardTunnel> = {
+        val clientKeys = generateKeypair()
+        val serverKeys = generateKeypair()
+        WireguardTunnel(clientKeys.privateKeyBase64, serverKeys.publicKeyBase64) to
+            WireguardTunnel(serverKeys.privateKeyBase64, clientKeys.publicKeyBase64)
+    },
 ) : TunnelRepository, TunnelStatusReporter {
 
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
@@ -70,12 +80,8 @@ class DefaultTunnelRepository(
     }
 
     // --- Self-test: fully offline, unrelated to the service or the network ---
-    override suspend fun runSelfTest(): List<SelfTestStep> {
-        val clientKeys = generateKeypair()
-        val serverKeys = generateKeypair()
-
-        val client = WireguardTunnel(clientKeys.privateKeyBase64, serverKeys.publicKeyBase64)
-        val server = WireguardTunnel(serverKeys.privateKeyBase64, clientKeys.publicKeyBase64)
+    override suspend fun runSelfTest(): Result<List<SelfTestStep>, DataError.Local> {
+        val (client, server) = createTunnelPair()
 
         val steps = mutableListOf<SelfTestStep>()
         try {
@@ -83,12 +89,12 @@ class DefaultTunnelRepository(
 
             val init = client.encapsulate(ByteArray(0))
             val initData = (init as? TunnAction.SendToNetwork)?.data
-                ?: return steps + SelfTestStep("❌ Client did not generate a handshake init")
+                ?: return Result.Error(DataError.Local.HANDSHAKE_FAILED)
             steps += SelfTestStep("📤 Handshake init sent (${initData.size} bytes)", hexPreview(initData))
 
             val response = server.decapsulate(initData)
             val responseData = (response as? TunnAction.SendToNetwork)?.data
-                ?: return steps + SelfTestStep("❌ Server did not respond to the handshake")
+                ?: return Result.Error(DataError.Local.HANDSHAKE_FAILED)
             steps += SelfTestStep(
                 "📥 Handshake response received (${responseData.size} bytes)",
                 hexPreview(responseData),
@@ -100,7 +106,7 @@ class DefaultTunnelRepository(
             val payload = "hello from self-test".toByteArray()
             val encrypted = client.encapsulate(payload)
             val encryptedData = (encrypted as? TunnAction.SendToNetwork)?.data
-                ?: return steps + SelfTestStep("❌ Data was not encrypted")
+                ?: return Result.Error(DataError.Local.HANDSHAKE_FAILED)
             steps += SelfTestStep(
                 "✉️ Encrypted ${payload.size} bytes → ${encryptedData.size} bytes",
                 hexPreview(encryptedData),
@@ -111,6 +117,6 @@ class DefaultTunnelRepository(
             client.close()
             server.close()
         }
-        return steps
+        return Result.Success(steps)
     }
 }
